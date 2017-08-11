@@ -1,0 +1,9 @@
+/src/inc/AccessCnt.txt
+/src/inc/db/define_db_my.inc
+/src/inc/define.inc
+/src/session
+/web_root/assets/node_modules
+/web_root/tmp
+/web_root/wp
+/web_root/api/data
+/web_root/assets/css/sass/.sass-cache

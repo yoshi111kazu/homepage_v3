@@ -1,0 +1,74 @@
+#!/usr/bin/expect
+#
+# Send mail Script
+#
+# $1 : Smtp Server Name
+# $2 : From Adress
+# $3 : To Adresses (partition is ,)
+# $4 : MailSubject
+# $5 : MailBody FilePath
+#
+# Ex)
+# ./MailSend.expect \
+#    xxx.xxx.co.jp \                        -- Smtp Server
+#    Mailtest \                             -- Subject
+#    /etc/hogehoge.txt \                    -- MailBody
+#    aaa@bbb.ccc.co.jp \                    -- From
+#    bbb@bbb.ccc.co.jp,ccc@bbb.ccc.co.jp \  -- To
+
+## Param Check
+if {$argc != 5} {
+   send_error "Parameter Error ...\n"
+   exit
+}
+
+## Set Constants String
+set SMTP_HOST      [lindex $argv 0]
+set FROM_ADDRESS   [lindex $argv 1]
+set TO_ADDRESS     [lindex $argv 2]
+set SUBJECT        [lindex $argv 3]
+set DATA_FILE_NAME [lindex $argv 4]
+
+## Open MailBody File
+set DATA_BODY [ open $DATA_FILE_NAME ]
+
+set TELNET         "/usr/bin/telnet"
+set HELO_HOST      $FROM_ADDRESS
+
+## Connection SmtpServer with telnet
+spawn $TELNET $SMTP_HOST 25;
+
+expect -re "220 *"
+   send "HELO $HELO_HOST\r"
+
+expect -re "250 *"
+   # Send From-Recipipent
+   send "MAIL FROM : $FROM_ADDRESS\r"
+
+expect -re "250 *"
+   # Send To-Recipipent
+   set taa [split $TO_ADDRESS ","]
+   for { set j 0 } {$j<[llength $taa]} {incr j} {
+     set TO_ADD [lindex $taa $j]
+     send "RCPT TO : $TO_ADD\r"
+   }
+
+expect -re "250 *"
+   send "DATA\r"
+
+expect -re "354 *"
+   send "From : $FROM_ADDRESS\r"
+   send "Subject : $SUBJECT\r"
+   send "To : $TO_ADDRESS\r"
+   while { [eof $DATA_BODY] == 0} {
+     gets $DATA_BODY data
+     send "$data\r"
+   }
+   send "\r.\r"
+
+expect "250 *"
+   send "QUIT\r"
+
+interact
+
+exit
